@@ -1,16 +1,11 @@
 services:
   - type: web
-    name: laravel-rembg-app
+    name: national-id-api
     env: docker
     plan: free
     dockerfilePath: ./Dockerfile
-    autoDeploy: true
     envVars:
       - key: APP_ENV
         value: production
-      - key: APP_DEBUG
-        value: false
       - key: APP_KEY
-        generateValue: true
-      - key: DB_CONNECTION
-        value: sqlitegit
+        sync: false

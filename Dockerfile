@@ -1,33 +1,30 @@
-# Use PHP base image with FPM
+# Use an official PHP image with extensions
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Set working directory
+WORKDIR /var/www
+
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    git unzip curl zip \
-    libpng-dev libonig-dev libxml2-dev libzip-dev \
+    git curl unzip libzip-dev zip \
+    libpng-dev libjpeg-dev libonig-dev libxml2-dev \
     python3 python3-pip python3-venv \
-    poppler-utils imagemagick \
-    ffmpeg libsm6 libxext6 \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath gd
+    libgl1-mesa-glx libglib2.0-0 ffmpeg libsm6 libxext6 \
+    && docker-php-ext-install pdo_mysql zip gd
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy project files
+# Install Laravel dependencies
 COPY . .
 
-# Install Laravel dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Install rembg
-RUN python3 -m pip install --upgrade pip && pip install "rembg[all]"
+# Set up rembg (recommended to avoid [all] shortcut)
+RUN pip install --upgrade pip && pip install rembg onnxruntime numpy click aiohttp
 
-# Give permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Permissions
+RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
 
-# Expose port 8000 and serve Laravel
-EXPOSE 8000
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Start PHP-FPM
+CMD ["php-fpm"]
